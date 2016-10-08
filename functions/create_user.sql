@@ -1,5 +1,5 @@
 DELIMITER $$
-CREATE DEFINER=`doc2016ProcExec`@`localhost` FUNCTION `UserCreate`(
+CREATE DEFINER=`docdbProcExec`@`localhost` FUNCTION `UserCreate`(
 pUserLogin varchar (20), -- Login пользователя
 pUserPassword varchar (255), -- Пароль пользователя
 pUserEmail varchar (255), -- E-mail пользователя
