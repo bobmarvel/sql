@@ -1,62 +1,64 @@
 DELIMITER $$
-CREATE DEFINER=`docdProExec`@`localhost` FUNCTION `UserCreate` (
-pUserLogin varchar(20), -- логин пользователя
-pUserPassword varchar(20), -- пароль позльзователя
-pUserEmail varchar(255),
-pUserNick varchar(255),
-pIsUserLoginApproved bit,
-pUseractive bit,
-pUserregdate datetime,
-pUser_must_change_psw bit,
-)
-RETURNS int
-COMMENT 'Функция создания пользователя'
-BEGIN
+CREATE DEFINER=`doc2016ProcExec`@`localhost` FUNCTION `UserCreate`(
+pUserLogin varchar (20), -- Login пользователя
+pUserPassword varchar (255), -- Пароль пользователя
+pUserEmail varchar (255), -- E-mail пользователя
+pUserNick varchar (255), -- Nick пользователя
+pIsUserLoginApproved bit(1), --  'Login  одобрен (1) или не одобрен (0) администратором'
+pUseractive bit(1),-- Пользователь  активен (1) или блокирован (0)'
+pUserregdate datetime ,-- Дата и время регистрации пользователя',
+pUser_must_change_psw bit(1) -- При следующем входе пользователь ОБЯЗАН сменить парлоль
+) RETURNS int(11)
+    COMMENT 'Функция  cсоздания пользователя'
+BEGIN 
+
 DECLARE tUserPswSalt char (10);
-DECLARE tUserPsw varchar;
+DECLARE tUserPsw varchar (255);
 DECLARE tPswMD5 char(32);
 
-DECLARE baseStr char(5);
-declare theSalt varchar(10) default "";
-declre tUserId int default -1;
+declare baseStr char (50);
+DECLARE theSalt varchar(10) DEFAULT "";
+DECLARE tUserId INT default -1;
 
-declare i INT default 10;
-declare j int ;
+DECLARE i INT DEFAULT 10; 
+DECLARE j INT ;
 
-IF (pUserLogin is null)or(pUserLogin="") then return -131; ENF if; -- логин пользователя
-IF (pUserEmail is null)or(pUserEmail="") then return -132; ENF if; -- e-mail пользователя
-IF (pUserNick is null)or(pUserNick="") then return -133; ENF if; -- Ник пользователя
-IF (pUserPassword is null)or(pUserPassword="") then return -134; ENF if; -- Пароль
 
-IF (isUserLoginExict(pUserLogin)) then return -121 ; ENF IF; --проверки на существующее
-IF (isUserEmailExict(pEmailLogin)) then return -122 ; ENF IF; --проверки на существующее
-IF (isUserNickExict(pUserNick)) then return -123 ; ENF IF; --проверки на существующее
+IF (pUserLogin IS NULL)or(pUserLogin="") THEN RETURN -131 ; END IF; -- Логин пользователя не может быть пустым
+IF (pUserEmail IS NULL)or(pUserEmail="") THEN RETURN -132 ; END IF; -- E-mail пользователя не может быть пустым
+IF (pUserNick IS NULL)or(pUserNick="") THEN RETURN -133 ; END IF; -- Ник пользователя не может быть пустым
+IF (pUserPassword IS NULL)or(pUserPassword="") THEN RETURN -134 ; END IF; -- Пароль пользователя не может быть пустым
 
-IF (pIsUserLoginApproved IS NULL) then SET pIsUserLoginApproved = true; END IF; --
-IF (pIsUserUseractive IS NULL) then SET pIsUserUseractive = true; END IF; 
-IF (pUser_must_change_psw is null) then set pUser_must_change_psw = false; END IF;
+IF (isUserLoginExist(pUserLogin)) THEN RETURN -121 ; END IF; -- Логин существует в базе данных
+IF (isUserEmailExist(pUserEmail)) THEN RETURN -122 ; END IF; -- E-mail существует в базе данных
+IF (isUserNickExist(pUserNick)) THEN RETURN -123 ; END IF; -- Ник существует в базе данных
 
-IF (pUserregdate is null) then set pUserregdate=now(); END IF; -- По умолчанию дата регистрации
+IF (pIsUserLoginApproved IS NULL) THEN SET pIsUserLoginApproved = true; END IF; -- По умоччанию - одрбрен
+IF (pUseractive IS NULL) THEN SET pUseractive = true; END IF; -- По умоччанию - активен
+IF (pUser_must_change_psw IS NULL) THEN SET pUser_must_change_psw = false; END IF; -- По умоччанию - не требуется смена пароляend
+
+IF (pUserregdate IS NULL) THEN SET pUserregdate = now(); END IF; -- По умоччанию - дата регистрации -= СЕЙЧАС
+
 
 SET tUserPswSalt = createSalt();
-set tUserPsw = concat(pUserPassword,tUserPswSalt);
-set tPswMD5 = md5(tUserPsw);
+SET tUserPsw  = concat(pUserPassword,tUserPswSalt);
+SET tPswMD5 = md5(tUserPsw);
 
-Insert INTO users set
-userlogin = pUserLogin,
-userpswMD5 = tPswMD5,
-userEmail = pUserEmail,
-userNick = pUserNick,
-userloginapproved = pIsUserLoginApproved
-useractive = pUseractive,
-userregdate = pUserregdate,
-user_must_change_psw = pUser_must_change_psw,
-userPswSalt = tUserPswSalt ;
+INSERT INTO users SET
+ userlogin = pUserLogin,
+ userpswMD5 = tPswMD5,
+ userEmail = pUserEmail,
+ userNick = pUserNick,
+ userloginapproved = pIsUserLoginApproved,
+ useractive = pUseractive,
+ userregdate = pUserregdate,
+ user_must_change_psw = pUser_must_change_psw,
+ userPswSalt = tUserPswSalt ;
+ 
+ IF (ROW_COUNT()<1) THEN  RETURN -135; END IF; -- Ошибка при создании пользователя.
 
-IF (ROW_COUNT()<1) then return -133; END IF; -- Ошибка при создании пользователя
-
-Set tUserId = LAST_INSERT_ID();
-
-RETURN tUserId ; -- успешно, возвращается UserId
+ SET tUserId  = LAST_INSERT_ID();
+RETURN tUserId ; -- УСПЕШНО - Возвращаем tUserId
+ 
 END$$
 DELIMITER ;
