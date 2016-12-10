@@ -59,4 +59,5 @@ Set tUserId = LAST_INSERT_ID();
 
 RETURN tUserId ; -- успешно, возвращается UserId
 END$$
+ASSSSASSSAAS;
 DELIMITER ;
